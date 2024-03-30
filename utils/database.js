@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-require("dotenv").config();
 
-let isConnected = false;
+let isConnected = false; // track the connection
 
 export const connectToDB = async () => {
   mongoose.set("strictQuery", true);
@@ -10,14 +9,17 @@ export const connectToDB = async () => {
     console.log("MongoDB is already connected");
     return;
   }
+
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       dbName: "share_prompt",
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    isConnected = true; // Correct assignment here
-    console.log("mongodb connected");
+
+    isConnected = true;
+
+    console.log("MongoDB connected");
   } catch (error) {
     console.log(error);
   }
