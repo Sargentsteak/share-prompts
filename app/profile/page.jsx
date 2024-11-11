@@ -3,25 +3,32 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import Profile from "@components/Profile";
 
 const MyProfile = () => {
   const router = useRouter();
-  const { data: session } = useSession();
-
+  const { data: session, status } = useSession();
   const [myPosts, setMyPosts] = useState([]);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const response = await fetch(`/api/users/${session?.user.id}/posts`);
-      const data = await response.json();
+    if (status === "unauthenticated") {
+      router.push("/login"); // Redirect to login if user is not authenticated
+    }
 
-      setMyPosts(data);
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch(`/api/users/${session?.user.id}/posts`);
+        if (!response.ok) throw new Error("Failed to fetch posts");
+
+        const data = await response.json();
+        setMyPosts(data);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
     };
 
     if (session?.user.id) fetchPosts();
-  }, [session?.user.id]);
+  }, [session?.user.id, status, router]);
 
   const handleEdit = (post) => {
     router.push(`/update-prompt?id=${post._id}`);
@@ -38,11 +45,11 @@ const MyProfile = () => {
           method: "DELETE",
         });
 
-        const filteredPosts = myPosts.filter((item) => item._id !== post._id);
-
-        setMyPosts(filteredPosts);
+        setMyPosts((prevPosts) =>
+          prevPosts.filter((item) => item._id !== post._id)
+        );
       } catch (error) {
-        console.log(error);
+        console.error("Error deleting post:", error);
       }
     }
   };
